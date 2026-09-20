@@ -1,0 +1,111 @@
+<main class="studio-shell">
+  <header class="topbar">
+    <div class="brand-mark"><span class="brand-dot"></span><span>LINE <i>&</i> LIGHT</span></div>
+    <div class="project-name"><span class="eyebrow">STUDY DESK</span><span>Untitled reference study</span></div>
+    <div class="top-actions"><button class="icon-button" aria-label="Settings">&#9881;</button><button class="avatar" aria-label="Profile">A</button></div>
+  </header>
+
+  <section class="workspace">
+    <aside class="sidebar">
+      <div class="side-heading"><span>REFERENCE</span><span class="status-light"></span></div>
+      <button class="import-button" (click)="openFilePicker()"><span class="plus">+</span><span>Open image</span><span class="shortcut">O</span></button>
+      <input #imageInput type="file" accept="image/*" hidden (change)="onFileSelected($event)">
+
+      <div class="reference-card" [class.empty]="!imageUrl">
+        <div class="thumbnail" [style.backgroundImage]="imageUrl ? 'url(' + imageUrl + ')' : ''"><span *ngIf="!imageUrl">+</span></div>
+        <div class="reference-copy"><strong>{{ fileName }}</strong><span *ngIf="image">{{ imageWidth }} × {{ imageHeight }} px</span><span *ngIf="!image">Waiting for an image</span></div>
+        <button class="more-button" aria-label="More options">•••</button>
+      </div>
+
+      <button class="import-button secondary" (click)="openComparePicker()"><span class="plus">+</span><span>Open comparison image</span><span class="shortcut">C</span></button>
+      <input #compareInput type="file" accept="image/*" hidden (change)="onCompareSelected($event)">
+      <div class="reference-card compare-card" [class.empty]="!compareImageUrl">
+        <div class="thumbnail" [style.backgroundImage]="compareImageUrl ? 'url(' + compareImageUrl + ')' : ''"><span *ngIf="!compareImageUrl">+</span></div>
+        <div class="reference-copy"><strong>{{ compareFileName }}</strong><span *ngIf="compareImage">Comparison ready</span><span *ngIf="!compareImage">No second reference</span></div>
+      </div>
+
+      <div class="side-heading tools-heading"><span>TOOLS</span></div>
+      <button class="tool-row active"><span class="tool-icon">◉</span><span>Canvas</span><span class="tool-key">1</span></button>
+      <button class="tool-row" (click)="toggleGrid()"><span class="tool-icon">▦</span><span>Graph paper</span><span class="toggle" [class.on]="showGrid"></span></button>
+      <button class="tool-row" (click)="toggleGuides()"><span class="tool-icon">╋</span><span>Guides</span><span class="toggle" [class.on]="showGuides"></span></button>
+      <button class="tool-row" (click)="toggleMirrorMode()"><span class="tool-icon">⇄</span><span>Mirror</span><span class="toggle" [class.on]="mirrorMode"></span></button>
+      <button class="tool-row" (click)="toggleSafeFrame()"><span class="tool-icon">◫</span><span>Safe frame</span><span class="toggle" [class.on]="showSafeFrame"></span></button>
+      <button class="tool-row" (click)="toggleSplitView()"><span class="tool-icon">⇅</span><span>Split compare</span><span class="toggle" [class.on]="showSplitView"></span></button>
+      <button class="tool-row" (click)="toggleCompositionGuides()"><span class="tool-icon">◭</span><span>Thirds</span><span class="toggle" [class.on]="showCompositionGuides"></span></button>
+      <button class="tool-row" (click)="toggleCropFrame()"><span class="tool-icon">▭</span><span>Crop frame</span><span class="toggle" [class.on]="showCropFrame"></span></button>
+
+      <div class="side-footer"><div class="saved-dot"></div><span>Autosaved just now</span></div>
+    </aside>
+
+    <section class="canvas-area">
+      <div class="canvas-toolbar">
+        <div class="toolbar-group"><button class="square-button" (click)="setZoom(zoom - 10)" aria-label="Zoom out">−</button><span class="zoom-value">{{ zoom }}%</span><button class="square-button" (click)="setZoom(zoom + 10)" aria-label="Zoom in">+</button><button class="fit-button" (click)="fitToView()">Fit</button></div>
+        <div class="toolbar-group"><button class="tool-button" (click)="toggleFullscreen()">{{ isFullscreen ? 'Exit full screen' : 'Full screen' }}</button><span class="canvas-divider"></span><span class="canvas-label">{{ image ? 'REFERENCE VIEW' : 'EMPTY CANVAS' }}</span><span class="canvas-divider"></span><span class="canvas-label">{{ unit | uppercase }}</span></div>
+      </div>
+      <div class="canvas-wrap"><canvas #artboard (click)="onCanvasClick($event)"></canvas><div class="canvas-corner">SHIFT + DRAG TO PAN</div></div>
+    </section>
+
+    <aside class="inspector">
+      <div class="inspector-title"><span>MEASUREMENTS</span><span class="ruler">⌗</span></div>
+      <div class="measurement-main"><span class="measure-label">IMAGE SIZE</span><strong>{{ measurement }}</strong><span class="measure-note">Based on {{ pixelsPerUnit }} px / {{ unit }}</span></div>
+      <div class="measure-row"><span>Width</span><strong>{{ image ? imageWidth : '—' }} <small>px</small></strong></div>
+      <div class="measure-row"><span>Height</span><strong>{{ image ? imageHeight : '—' }} <small>px</small></strong></div>
+      <div class="measure-row"><span>Aspect ratio</span><strong>{{ image ? (imageWidth / imageHeight).toFixed(2) : '—' }}</strong></div>
+      <div class="inspector-section"><span class="measure-label">SCALE</span><label class="scale-input"><input type="number" [(ngModel)]="pixelsPerUnit" min="1"><span>px / {{ unit }}</span></label><p>Use a known dimension in your reference to calibrate the grid.</p></div>
+      <div class="inspector-section"><span class="measure-label">GRAPH</span>
+        <div class="graph-settings">
+          <label class="graph-setting"><span>Spacing</span><input type="number" [(ngModel)]="gridSize" min="8" max="100"></label>
+          <label class="graph-setting"><span>Opacity</span><input type="range" min="0.05" max="1" step="0.05" [(ngModel)]="gridOpacity"><strong>{{ gridOpacity | number:'1.2-2' }}</strong></label>
+          <label class="graph-setting color-setting"><span>Color</span><input type="color" [(ngModel)]="gridColor"></label>
+        </div>
+      </div>
+      <div class="inspector-section"><span class="measure-label">VIEW</span>
+        <div class="tool-row-grid">
+          <button class="mini-button" (click)="rotateLeft()">Rotate −</button>
+          <button class="mini-button" (click)="rotateRight()">Rotate +</button>
+          <button class="mini-button" (click)="flipHorizontalToggle()">Flip H</button>
+          <button class="mini-button" (click)="flipVerticalToggle()">Flip V</button>
+        </div>
+        <label class="ratio-picker">
+          <span>Ratio</span>
+          <select [(ngModel)]="selectedAspectRatio" (ngModelChange)="setAspectRatio($event)">
+            <option *ngFor="let ratio of aspectRatios" [value]="ratio">{{ ratio }}</option>
+          </select>
+        </label>
+      </div>
+      <div class="inspector-section"><span class="measure-label">COLOR PICKER</span>
+        <div class="color-sample-row">
+          <span class="sample-swatch" [style.background]="sampleColor"></span>
+          <strong>{{ sampleColor }}</strong>
+        </div>
+        <div class="palette-grid">
+          <button *ngFor="let color of paletteColors" class="swatch-button" [style.background]="color" (click)="selectPaletteColor(color)" [attr.aria-label]="'Use color ' + color"></button>
+        </div>
+        <button class="mini-action" (click)="addCurrentColorToPalette()">Add current swatch</button>
+        <p>Click on the canvas to sample a tone from your reference.</p>
+      </div>
+      <div class="inspector-section"><span class="measure-label">ANNOTATIONS</span>
+        <div class="annotation-actions">
+          <button class="mini-action" (click)="toggleAnnotationMode()">{{ annotationMode ? 'Stop drawing' : 'Draw marks' }}</button>
+          <button class="mini-action subtle" (click)="clearAnnotations()">Clear</button>
+        </div>
+        <label class="stroke-picker">
+          <span>Stroke</span>
+          <input type="number" [(ngModel)]="annotationSize" min="1" max="12">
+        </label>
+        <label class="stroke-picker color-stroke-picker">
+          <span>Color</span>
+          <input type="color" [(ngModel)]="annotationColor">
+        </label>
+      </div>
+      <div class="inspector-section"><span class="measure-label">VALUE CHECK</span>
+        <button class="toggle-row" (click)="toggleValueChecker()">
+          <span>Grayscale preview</span>
+          <span class="toggle" [class.on]="showValueChecker"></span>
+        </button>
+      </div>
+      <div class="inspector-section"><span class="measure-label">NOTES</span><textarea placeholder="Add a thought about this study..."></textarea></div>
+    </aside>
+  </section>
+  <footer class="statusbar"><span><b class="key-dot"></b> Ready to study</span><span>Line & Light <i>v0.1.0</i></span></footer>
+</main>
